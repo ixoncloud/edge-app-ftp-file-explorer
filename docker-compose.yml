@@ -1,0 +1,23 @@
+services:
+  ftp-server:
+    image: garethflowers/ftp-server
+    environment:
+      - FTP_PASS=ftppassword
+      - FTP_USER=ftpuser
+    ports:
+      - '20-21:20-21/tcp'
+      - '40000-40009:40000-40009/tcp'
+    volumes:
+      - ./ftp-server/data:/home/ftpuser
+
+  ftp-to-http-service:
+    build: ./ftp-to-http-service
+    ports:
+      - '5090:5090' # Map gunicorn app port
+    depends_on:
+      - ftp-server
+    environment:
+      - FTP_SERVER=ftp-server # Use service name as the FTP host
+      - FTP_USERNAME=ftpuser
+      - FTP_PASSWORD=ftppassword
+    command: gunicorn -w 4 -b 0.0.0.0:5090 app:app
